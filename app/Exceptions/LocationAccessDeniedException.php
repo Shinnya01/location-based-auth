@@ -2,17 +2,6 @@
 
 namespace App\Exceptions;
 
-use Exception;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
+use Sitebound\LocationAuth\Exceptions\LocationAccessDeniedException as BaseLocationAccessDeniedException;
 
-class LocationAccessDeniedException extends Exception
-{
-    /**
-     * Render the exception as an HTTP response.
-     */
-    public function render(Request $request): RedirectResponse
-    {
-        return redirect()->guest(route('location-access-denied'));
-    }
-}
+class LocationAccessDeniedException extends BaseLocationAccessDeniedException {}

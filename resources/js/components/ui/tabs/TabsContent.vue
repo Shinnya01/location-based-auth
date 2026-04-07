@@ -1,0 +1,25 @@
+<script setup lang="ts">
+import type { TabsContentProps } from "reka-ui"
+import type { HTMLAttributes } from "vue"
+import { reactiveOmit } from "@vueuse/core"
+import { TabsContent, useForwardProps } from "reka-ui"
+import { cn } from "@/lib/utils"
+
+const props = defineProps<TabsContentProps & { class?: HTMLAttributes["class"] }>()
+
+const delegatedProps = reactiveOmit(props, "class")
+const forwardedProps = useForwardProps(delegatedProps)
+</script>
+
+<template>
+  <TabsContent
+    data-slot="tabs-content"
+    v-bind="forwardedProps"
+    :class="cn(
+      'ring-offset-background mt-4 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+      props.class,
+    )"
+  >
+    <slot />
+  </TabsContent>
+</template>
