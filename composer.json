@@ -37,6 +37,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Sitebound\\LocationAuth\\": "packages/laravel-location-auth/src/",
             "Tests\\": "tests/"
         }
     },
