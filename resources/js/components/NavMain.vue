@@ -15,32 +15,34 @@ import {
     SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
-import type { NavItem } from '@/types';
+import type { SidebarNavItem } from '@/types';
 
 const props = defineProps<{
-    items: NavItem[];
+    items: SidebarNavItem[];
     label?: string;
 }>();
 
 const { currentUrl, isCurrentOrParentUrl } = useCurrentUrl();
 const expandedItems = ref<Record<string, boolean>>({});
 
-function itemHasChildren(item: NavItem): boolean {
+function itemHasChildren(item: SidebarNavItem): boolean {
     return Boolean(item.children?.length);
 }
 
-function itemHasActiveBranch(item: NavItem): boolean {
+function itemHasActiveBranch(item: SidebarNavItem): boolean {
     return Boolean(
-        isCurrentOrParentUrl(item.href) ||
-            item.children?.some((child) => isCurrentOrParentUrl(child.href)),
+        (item.href ? isCurrentOrParentUrl(item.href) : false) ||
+        item.children?.some((child) =>
+            child.href ? isCurrentOrParentUrl(child.href) : false,
+        ),
     );
 }
 
-function itemIsExpanded(item: NavItem): boolean {
+function itemIsExpanded(item: SidebarNavItem): boolean {
     return Boolean(itemHasChildren(item) && expandedItems.value[item.title]);
 }
 
-function toggleChildren(item: NavItem): void {
+function toggleChildren(item: SidebarNavItem): void {
     if (!itemHasChildren(item)) {
         return;
     }
@@ -66,7 +68,23 @@ watch(
         <SidebarGroupLabel>{{ label ?? 'Platform' }}</SidebarGroupLabel>
         <SidebarMenu>
             <SidebarMenuItem v-for="item in props.items" :key="item.title">
-                <template v-if="!item.disabled">
+                <template v-if="item.disabled">
+                    <SidebarMenuButton
+                        disabled
+                        :tooltip="`${item.title} (Coming soon)`"
+                        class="opacity-80"
+                    >
+                        <component :is="item.icon" />
+                        <span>{{ item.title }}</span>
+                        <Badge
+                            variant="outline"
+                            class="ml-auto border-sidebar-border bg-sidebar text-[10px] text-sidebar-foreground/70"
+                        >
+                            Soon
+                        </Badge>
+                    </SidebarMenuButton>
+                </template>
+                <template v-else-if="item.href">
                     <SidebarMenuButton
                         as-child
                         :is-active="itemHasActiveBranch(item)"
@@ -77,41 +95,46 @@ watch(
                             <span>{{ item.title }}</span>
                         </Link>
                     </SidebarMenuButton>
-                    <SidebarMenuAction
-                        v-if="itemHasChildren(item)"
-                        :aria-label="itemIsExpanded(item) ? `Collapse ${item.title}` : `Expand ${item.title}`"
-                        @click.stop.prevent="toggleChildren(item)"
-                    >
-                        <component :is="itemIsExpanded(item) ? ChevronUp : ChevronDown" />
-                    </SidebarMenuAction>
                 </template>
-                <SidebarMenuButton
-                    v-else
-                    disabled
-                    :tooltip="`${item.title} (Coming soon)`"
-                    class="opacity-80"
-                >
-                    <component :is="item.icon" />
-                    <span>{{ item.title }}</span>
-                    <Badge
-                        variant="outline"
-                        class="ml-auto border-sidebar-border bg-sidebar text-[10px] text-sidebar-foreground/70"
+                <template v-else>
+                    <SidebarMenuButton
+                        :is-active="itemHasActiveBranch(item)"
+                        :tooltip="item.title"
+                        :aria-expanded="itemIsExpanded(item)"
+                        @click="toggleChildren(item)"
                     >
-                        Soon
-                    </Badge>
-                </SidebarMenuButton>
+                        <component :is="item.icon" v-if="item.icon" />
+                        <span>{{ item.title }}</span>
+                    </SidebarMenuButton>
+                </template>
 
-                <SidebarMenuSub v-if="itemHasChildren(item) && itemIsExpanded(item)">
+                <SidebarMenuAction
+                    v-if="itemHasChildren(item) && !item.disabled"
+                    :aria-label="
+                        itemIsExpanded(item)
+                            ? `Collapse ${item.title}`
+                            : `Expand ${item.title}`
+                    "
+                    @click.stop.prevent="toggleChildren(item)"
+                >
+                    <component
+                        :is="itemIsExpanded(item) ? ChevronUp : ChevronDown"
+                    />
+                </SidebarMenuAction>
+
+                <SidebarMenuSub
+                    v-if="itemHasChildren(item) && itemIsExpanded(item)"
+                >
                     <SidebarMenuSubItem
                         v-for="child in item.children"
                         :key="`${item.title}-${child.title}`"
                     >
                         <SidebarMenuSubButton
-                            v-if="!child.disabled"
+                            v-if="!child.disabled && child.href"
                             as-child
                             :is-active="isCurrentOrParentUrl(child.href)"
                         >
-                            <Link :href="child.href">
+                            <Link :href="child.href ?? '#'">
                                 <span>{{ child.title }}</span>
                             </Link>
                         </SidebarMenuSubButton>

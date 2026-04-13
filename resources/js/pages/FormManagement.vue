@@ -1,18 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import {
-    ArrowLeft,
-    FileText,
-    LayoutTemplate,
-    Printer,
-    ShieldCheck,
-} from 'lucide-vue-next';
+import { ArrowLeft, FileText } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
-import Heading from '@/components/Heading.vue';
-import { printableForms } from '@/lib/hrisData';
-import { recordKeeping } from '@/routes';
-import { forms as recordKeepingForms } from '@/routes/record-keeping';
-import type { PrintableForm } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +18,10 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { printableForms } from '@/lib/hrisData';
+import { recordKeeping } from '@/routes';
+import { forms as recordKeepingForms } from '@/routes/record-keeping';
+import type { PrintableForm } from '@/types';
 
 defineOptions({
     layout: {
@@ -48,26 +41,6 @@ defineOptions({
 const previewFormId = ref<string | null>(null);
 const isPreviewOpen = ref<boolean>(false);
 
-const recruitmentFormCount = computed(
-    () =>
-        printableForms.filter((form) => form.category === 'Recruitment').length,
-);
-
-const employeeRecordFormCount = computed(
-    () =>
-        printableForms.filter((form) =>
-            ['201 File', 'Medical', 'Clearance', 'Performance'].includes(
-                form.category,
-            ),
-        ).length,
-);
-
-const recordsOfficeFormCount = computed(
-    () =>
-        printableForms.filter((form) => form.category === 'Administrative')
-            .length,
-);
-
 const selectedPrintableForm = computed<PrintableForm | null>(
     () =>
         printableForms.find((form) => form.id === previewFormId.value) ?? null,
@@ -83,125 +56,31 @@ function openFormPreview(formId: string): void {
     <Head title="Printable Forms" />
 
     <div class="flex flex-1 flex-col gap-6 p-4 md:p-6">
-        <!-- <section class="rounded-[1.75rem] border bg-linear-to-br from-background via-background to-muted/35 p-5 shadow-xs md:p-6">
-            <div class="flex flex-col gap-6">
-                <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                    <Heading
-                        title="Printable Forms"
-                        description="Access blank printable HR forms in a separate static page under Record Keeping, without mixing them with applicant or employee record creation."
-                    />
-
-                    <div class="flex flex-wrap items-center gap-2">
-                        <Badge
-                            variant="outline"
-                            class="rounded-full border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300"
-                        >
-                            Static printable catalog
-                        </Badge>
-
-                        
-                    </div>
+        <section
+            class="rounded-[1.75rem] border bg-linear-to-br from-background via-background to-muted/35 p-5 shadow-xs md:p-6"
+        >
+            <div
+                class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between"
+            >
+                <div class="space-y-1">
+                    <h1 class="text-xl font-semibold tracking-tight">
+                        Printable Forms
+                    </h1>
+                    <p class="max-w-3xl text-sm text-muted-foreground">
+                        Access blank printable HR forms in a separate static
+                        page under Record Keeping, without mixing them with
+                        applicant or employee record creation.
+                    </p>
                 </div>
 
-                <div class="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-                    <Card class="rounded-3xl border-emerald-200/80 bg-emerald-50/70 shadow-none dark:border-emerald-900 dark:bg-emerald-950/20">
-                        <CardContent class="flex items-start gap-3 p-5">
-                            <div class="rounded-2xl border border-emerald-200 bg-white/80 p-2.5 text-emerald-700 dark:border-emerald-900 dark:bg-background/60 dark:text-emerald-300">
-                                <ShieldCheck class="size-5" />
-                            </div>
-                            <div class="space-y-1.5">
-                                <p class="font-medium text-foreground">
-                                    Printable forms stay separate from record creation
-                                </p>
-                                <p class="text-sm text-muted-foreground">
-                                    These are blank forms only. They can be viewed or printed without creating an applicant or employee record first.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card class="rounded-3xl shadow-none">
-                        <CardContent class="p-5">
-                            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                                Quick rule
-                            </p>
-                            <p class="mt-3 font-medium text-foreground">
-                                Blank forms first, record filing later
-                            </p>
-                            <p class="mt-2 text-sm text-muted-foreground">
-                                Print or preview the template here, then attach the accomplished copy to an applicant folder or employee 201 file later on.
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <Card class="rounded-2xl border-blue-200/80 bg-linear-to-br from-blue-50 via-white to-white shadow-none dark:border-blue-900/70 dark:from-blue-950/40 dark:via-background dark:to-background">
-                        <CardContent class="flex items-start justify-between gap-3 p-5">
-                            <div>
-                                <p class="text-sm font-medium text-muted-foreground">
-                                    Printable templates
-                                </p>
-                                <p class="mt-3 text-3xl font-semibold tracking-tight">
-                                    {{ printableForms.length }}
-                                </p>
-                            </div>
-                            <div class="rounded-2xl border border-blue-200/70 bg-white/80 p-2.5 text-blue-700 shadow-xs dark:border-blue-900 dark:bg-background/60 dark:text-blue-300">
-                                <Printer class="size-5" />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card class="rounded-2xl border-emerald-200/80 bg-linear-to-br from-emerald-50 via-white to-white shadow-none dark:border-emerald-900/70 dark:from-emerald-950/40 dark:via-background dark:to-background">
-                        <CardContent class="flex items-start justify-between gap-3 p-5">
-                            <div>
-                                <p class="text-sm font-medium text-muted-foreground">
-                                    Recruitment forms
-                                </p>
-                                <p class="mt-3 text-3xl font-semibold tracking-tight">
-                                    {{ recruitmentFormCount }}
-                                </p>
-                            </div>
-                            <div class="rounded-2xl border border-emerald-200/70 bg-white/80 p-2.5 text-emerald-700 shadow-xs dark:border-emerald-900 dark:bg-background/60 dark:text-emerald-300">
-                                <ShieldCheck class="size-5" />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card class="rounded-2xl border-amber-200/80 bg-linear-to-br from-amber-50 via-white to-white shadow-none dark:border-amber-900/70 dark:from-amber-950/40 dark:via-background dark:to-background">
-                        <CardContent class="flex items-start justify-between gap-3 p-5">
-                            <div>
-                                <p class="text-sm font-medium text-muted-foreground">
-                                    Employee record forms
-                                </p>
-                                <p class="mt-3 text-3xl font-semibold tracking-tight">
-                                    {{ employeeRecordFormCount }}
-                                </p>
-                            </div>
-                            <div class="rounded-2xl border border-amber-200/70 bg-white/80 p-2.5 text-amber-700 shadow-xs dark:border-amber-900 dark:bg-background/60 dark:text-amber-300">
-                                <LayoutTemplate class="size-5" />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card class="rounded-2xl border-slate-200/80 bg-linear-to-br from-slate-50 via-white to-white shadow-none dark:border-slate-800 dark:from-slate-950/40 dark:via-background dark:to-background">
-                        <CardContent class="flex items-start justify-between gap-3 p-5">
-                            <div>
-                                <p class="text-sm font-medium text-muted-foreground">
-                                    Records office tools
-                                </p>
-                                <p class="mt-3 text-3xl font-semibold tracking-tight">
-                                    {{ recordsOfficeFormCount }}
-                                </p>
-                            </div>
-                            <div class="rounded-2xl border border-slate-200/70 bg-white/80 p-2.5 text-slate-700 shadow-xs dark:border-slate-800 dark:bg-background/60 dark:text-slate-200">
-                                <FileText class="size-5" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                <Badge
+                    variant="outline"
+                    class="w-fit rounded-full border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300"
+                >
+                    Static printable catalog
+                </Badge>
             </div>
-        </section> -->
+        </section>
         <div>
             <Button variant="outline" class="rounded-full" as-child>
                 <Link :href="recordKeeping()">

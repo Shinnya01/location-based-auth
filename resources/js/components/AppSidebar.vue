@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/vue3';
 import {
     BriefcaseBusiness,
     Clock3,
+    DollarSign,
     FileArchive,
     FileBarChart2,
     LayoutGrid,
@@ -20,11 +21,19 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard, recordKeeping, timekeeping } from '@/routes';
+import {
+    dashboard,
+    departments,
+    employees,
+    payroll,
+    recordKeeping,
+    salary,
+    timekeeping,
+} from '@/routes';
 import { forms as recordKeepingForms } from '@/routes/record-keeping';
-import type { NavItem } from '@/types';
+import type { SidebarNavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
+const mainNavItems: SidebarNavItem[] = [
     {
         title: 'Dashboard',
         href: dashboard(),
@@ -37,24 +46,50 @@ const mainNavItems: NavItem[] = [
         disabled: true,
     },
     {
-        title: 'Employees',
-        href: '#',
-        icon: Users,
-        disabled: true,
-    },
-    {
         title: 'Timekeeping',
         href: timekeeping(),
         icon: Clock3,
     },
     {
-        title: 'Record Keeping',
-        href: recordKeeping(),
+        title: 'Payroll',
+        icon: DollarSign,
+        disabled: true,
+        children: [
+            {
+                title: 'Payroll',
+                href: payroll(),
+            },
+            {
+                title: 'Salary & Compensation',
+                href: salary(),
+            },
+        ],
+    },
+    {
+        title: 'Document',
         icon: FileArchive,
         children: [
             {
-                title: 'Printable Forms',
+                title: 'Record Keeping',
+                href: recordKeeping(),
+            },
+            {
+                title: 'Printable Form',
                 href: recordKeepingForms(),
+            },
+        ],
+    },
+    {
+        title: 'Organization',
+        icon: Users,
+        children: [
+            {
+                title: 'Employee',
+                href: employees(),
+            },
+            {
+                title: 'Department',
+                href: departments(),
             },
         ],
     },

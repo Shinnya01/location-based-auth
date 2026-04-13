@@ -4,6 +4,9 @@ import 'leaflet/dist/leaflet.css';
 import { Head, useForm } from '@inertiajs/vue3';
 import type { Circle, LatLngExpression, Map as LeafletMap, Marker } from 'leaflet';
 import L from 'leaflet';
+import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
+import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png';
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import LocationAccessController from '@/actions/App/Http/Controllers/Settings/LocationAccessController';
 import Heading from '@/components/Heading.vue';
@@ -29,9 +32,6 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { formatDistance } from '@/lib/locationAccess';
 import { edit } from '@/routes/location-access';
-import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
-import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png';
 
 type Props = {
     locationAccess: {

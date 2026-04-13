@@ -4,11 +4,14 @@ import type {
     AttendanceRecord,
     AttendanceStatus,
     ArchiveEntry,
+    DepartmentRecord,
     DepartmentOption,
     DocumentRegistryEntry,
     DocumentCategory,
     DocumentStatus,
     DocumentType,
+    EmployeeDirectoryRecord,
+    EmployeeDirectoryStatus,
     EmployeeRecordFileSummary,
     EmployeeAttendanceHistoryEntry,
     EmployeeDocument,
@@ -21,13 +24,10 @@ import type {
     RawLogEntry,
     RawLogStatus,
     ShiftDefinition,
+    PayrollRecord,
+    PayrollDetails,
+    SalaryRecord,
 } from '@/types';
-
-type DepartmentConfig = DepartmentOption & {
-    positions: string[];
-    workLocation: string;
-    supervisor: string;
-};
 
 type DocumentTemplate = {
     category: DocumentCategory;
@@ -37,46 +37,70 @@ type DocumentTemplate = {
 
 const attendanceDate = '2026-04-07';
 
-const departmentConfigs: DepartmentConfig[] = [
+const departmentConfigs: DepartmentRecord[] = [
     {
         id: 'hr',
         name: 'Human Resources',
-        positions: ['HR Officer II', 'Recruitment Analyst', 'Administrative Aide VI'],
+        positions: [
+            'HR Officer II',
+            'Recruitment Analyst',
+            'Administrative Aide VI',
+        ],
         workLocation: 'HR Service Center, 4F Main Building',
         supervisor: 'Maricel S. Villanueva',
     },
     {
         id: 'finance',
         name: 'Finance',
-        positions: ['Budget Analyst II', 'Payroll Officer I', 'Accounting Clerk IV'],
+        positions: [
+            'Budget Analyst II',
+            'Payroll Officer I',
+            'Accounting Clerk IV',
+        ],
         workLocation: 'Finance Division, 2F Annex Building',
         supervisor: 'Ramon P. Javier',
     },
     {
         id: 'operations',
         name: 'Operations',
-        positions: ['Operations Officer III', 'Program Coordinator II', 'Monitoring Officer I'],
+        positions: [
+            'Operations Officer III',
+            'Program Coordinator II',
+            'Monitoring Officer I',
+        ],
         workLocation: 'Operations Command Room, 3F East Wing',
         supervisor: 'Leah M. Santos',
     },
     {
         id: 'it',
         name: 'Information Technology',
-        positions: ['Systems Developer II', 'IT Officer I', 'Data Management Specialist'],
+        positions: [
+            'Systems Developer II',
+            'IT Officer I',
+            'Data Management Specialist',
+        ],
         workLocation: 'Digital Services Hub, 5F Main Building',
         supervisor: 'Jan Michael C. Torres',
     },
     {
         id: 'admin',
         name: 'General Services',
-        positions: ['Administrative Officer IV', 'Records Officer II', 'Property Custodian'],
+        positions: [
+            'Administrative Officer IV',
+            'Records Officer II',
+            'Property Custodian',
+        ],
         workLocation: 'Admin and Records Unit, Ground Floor',
         supervisor: 'Rosalinda A. Mercado',
     },
     {
         id: 'field',
         name: 'Field Services',
-        positions: ['Field Supervisor', 'Community Affairs Officer', 'Monitoring Assistant'],
+        positions: [
+            'Field Supervisor',
+            'Community Affairs Officer',
+            'Monitoring Assistant',
+        ],
         workLocation: 'North Cluster Satellite Office',
         supervisor: 'Enrico B. Velasco',
     },
@@ -201,17 +225,44 @@ const documentTemplates: DocumentTemplate[] = [
     },
 ];
 
-const employmentStatuses = ['Permanent', 'Permanent', 'Permanent', 'Contractual', 'Probationary'] as const;
-const civilStatuses = ['Single', 'Married', 'Single', 'Married', 'Separated'] as const;
+const employmentStatuses = [
+    'Permanent',
+    'Permanent',
+    'Permanent',
+    'Contractual',
+    'Probationary',
+] as const;
+const civilStatuses = [
+    'Single',
+    'Married',
+    'Single',
+    'Married',
+    'Separated',
+] as const;
 const nationalities = ['Filipino'] as const;
-const employeeStatuses: EmployeeStatus[] = ['On Site', 'On Site', 'On Site', 'Field Duty'];
+const employeeStatuses: EmployeeStatus[] = [
+    'On Site',
+    'On Site',
+    'On Site',
+    'Field Duty',
+];
+const employeeDirectoryStatuses: EmployeeDirectoryStatus[] = [
+    'Active',
+    'Active',
+    'Active',
+    'On Leave',
+    'Inactive',
+];
 
 function createEmployeeCode(index: number): string {
     return `HR-${String(index + 1).padStart(4, '0')}`;
 }
 
 function slugifyName(name: string): string {
-    return name.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/(^\.|\.$)/g, '');
+    return name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '.')
+        .replace(/(^\.|\.$)/g, '');
 }
 
 function formatDate(year: number, month: number, day: number): string {
@@ -249,7 +300,11 @@ function statusForIndex(index: number): AttendanceStatus {
     return 'present';
 }
 
-function rawStatusForLog(status: AttendanceStatus, order: number, index: number): RawLogStatus {
+function rawStatusForLog(
+    status: AttendanceStatus,
+    order: number,
+    index: number,
+): RawLogStatus {
     if (status === 'late' && order === 0) {
         return 'Adjusted';
     }
@@ -269,10 +324,19 @@ function methodForEmployee(employee: EmployeeOption, order: number): LogMethod {
     return order % 2 === 0 ? 'Biometric' : 'GPS';
 }
 
-export const departments: DepartmentOption[] = departmentConfigs.map(({ id, name }) => ({
-    id,
-    name,
-}));
+export const departments: DepartmentOption[] = departmentConfigs.map(
+    ({ id, name }) => ({
+        id,
+        name,
+    }),
+);
+
+export const departmentRecords: DepartmentRecord[] = departmentConfigs.map(
+    (department) => ({
+        ...department,
+        positions: [...department.positions],
+    }),
+);
 
 export const documentCategories: DocumentCategory[] = [
     'Personal',
@@ -355,15 +419,49 @@ export const employees: EmployeeOption[] = employeeNames.map((name, index) => {
     };
 });
 
-function buildAttendanceLogs(employee: EmployeeOption, status: AttendanceStatus, index: number): AttendanceLogEntry[] {
+export const employeeDirectoryRecords: EmployeeDirectoryRecord[] = employeeNames
+    .slice(0, 18)
+    .map((name, index) => {
+        const nameParts = name.split(' ');
+        const first_name = nameParts[0] ?? 'Maria';
+        const last_name = nameParts.at(-1) ?? 'Santos';
+        const middle_name = nameParts.slice(1, -1).join(' ') || 'N/A';
+        const department = departmentConfigs[index % departmentConfigs.length];
+        const hire_date = formatDate(
+            2016 + (index % 8),
+            ((index + 3) % 12) + 1,
+            ((index * 2 + 7) % 27) + 1,
+        );
+
+        return {
+            employee_no: `EMP-2026-${String(index + 1).padStart(3, '0')}`,
+            department_employee_id: `${department.id.toUpperCase()}-EMP-${String(index + 1).padStart(3, '0')}`,
+            first_name,
+            last_name,
+            middle_name,
+            position: department.positions[index % department.positions.length],
+            hire_date,
+            status: employeeDirectoryStatuses[
+                index % employeeDirectoryStatuses.length
+            ],
+        };
+    });
+
+function buildAttendanceLogs(
+    employee: EmployeeOption,
+    status: AttendanceStatus,
+    index: number,
+): AttendanceLogEntry[] {
     if (status === 'absent') {
         return [];
     }
 
-    const timeInMinutes = status === 'late' ? 490 + (index % 5) * 3 : 478 + (index % 7);
+    const timeInMinutes =
+        status === 'late' ? 490 + (index % 5) * 3 : 478 + (index % 7);
     const lunchOutMinutes = 720 + (index % 4);
     const lunchInMinutes = 780 + (index % 4);
-    const timeOutMinutes = status === 'late' ? 1025 + (index % 7) : 1020 + (index % 9);
+    const timeOutMinutes =
+        status === 'late' ? 1025 + (index % 7) : 1020 + (index % 9);
 
     return [
         {
@@ -401,35 +499,42 @@ function buildAttendanceLogs(employee: EmployeeOption, status: AttendanceStatus,
     ];
 }
 
-export const attendanceRecords: AttendanceRecord[] = employees.map((employee, index) => {
-    const status = statusForIndex(index);
-    const logs = buildAttendanceLogs(employee, status, index);
-    const firstLog = logs[0] ?? null;
-    const lastLog = logs.at(-1) ?? null;
+export const attendanceRecords: AttendanceRecord[] = employees.map(
+    (employee, index) => {
+        const status = statusForIndex(index);
+        const logs = buildAttendanceLogs(employee, status, index);
+        const firstLog = logs[0] ?? null;
+        const lastLog = logs.at(-1) ?? null;
 
-    return {
-        id: `attendance-${index + 1}`,
-        employeeId: employee.id,
-        employeeCode: employee.employeeCode,
-        employeeName: employee.name,
-        position: employee.position,
-        departmentId: employee.departmentId,
-        departmentName: employee.departmentName,
-        date: attendanceDate,
-        shiftName: employee.departmentId === 'field' ? 'Field Operations Shift' : 'Regular Day Shift',
-        timeIn: firstLog?.time ?? null,
-        timeOut: lastLog?.time ?? null,
-        totalHours:
-            firstLog && lastLog
-                ? differenceLabel(
-                      Number(firstLog.time.slice(0, 2)) * 60 + Number(firstLog.time.slice(3, 5)),
-                      Number(lastLog.time.slice(0, 2)) * 60 + Number(lastLog.time.slice(3, 5)),
-                  )
-                : '0h 00m',
-        status,
-        logs,
-    };
-});
+        return {
+            id: `attendance-${index + 1}`,
+            employeeId: employee.id,
+            employeeCode: employee.employeeCode,
+            employeeName: employee.name,
+            position: employee.position,
+            departmentId: employee.departmentId,
+            departmentName: employee.departmentName,
+            date: attendanceDate,
+            shiftName:
+                employee.departmentId === 'field'
+                    ? 'Field Operations Shift'
+                    : 'Regular Day Shift',
+            timeIn: firstLog?.time ?? null,
+            timeOut: lastLog?.time ?? null,
+            totalHours:
+                firstLog && lastLog
+                    ? differenceLabel(
+                          Number(firstLog.time.slice(0, 2)) * 60 +
+                              Number(firstLog.time.slice(3, 5)),
+                          Number(lastLog.time.slice(0, 2)) * 60 +
+                              Number(lastLog.time.slice(3, 5)),
+                      )
+                    : '0h 00m',
+            status,
+            logs,
+        };
+    },
+);
 
 export const rawLogs: RawLogEntry[] = attendanceRecords
     .flatMap((record) =>
@@ -451,7 +556,10 @@ export const rawLogs: RawLogEntry[] = attendanceRecords
     )
     .sort((left, right) => right.timestamp.localeCompare(left.timestamp));
 
-function historyStatus(mainStatus: AttendanceStatus, dayOffset: number): AttendanceStatus {
+function historyStatus(
+    mainStatus: AttendanceStatus,
+    dayOffset: number,
+): AttendanceStatus {
     if (dayOffset === 0) {
         return mainStatus;
     }
@@ -467,7 +575,10 @@ function historyStatus(mainStatus: AttendanceStatus, dayOffset: number): Attenda
     return 'present';
 }
 
-function buildAttendanceHistory(employee: EmployeeOption, index: number): EmployeeAttendanceHistoryEntry[] {
+function buildAttendanceHistory(
+    employee: EmployeeOption,
+    index: number,
+): EmployeeAttendanceHistoryEntry[] {
     return Array.from({ length: 5 }, (_, dayOffset) => {
         const status = historyStatus(statusForIndex(index), dayOffset);
         const date = new Date(`${attendanceDate}T00:00:00`);
@@ -479,7 +590,10 @@ function buildAttendanceHistory(employee: EmployeeOption, index: number): Employ
             return {
                 id: `${employee.id}-history-${dayOffset + 1}`,
                 date: formattedDate,
-                shiftName: employee.departmentId === 'field' ? 'Field Operations Shift' : 'Regular Day Shift',
+                shiftName:
+                    employee.departmentId === 'field'
+                        ? 'Field Operations Shift'
+                        : 'Regular Day Shift',
                 timeIn: null,
                 timeOut: null,
                 totalHours: '0h 00m',
@@ -493,7 +607,10 @@ function buildAttendanceHistory(employee: EmployeeOption, index: number): Employ
         return {
             id: `${employee.id}-history-${dayOffset + 1}`,
             date: formattedDate,
-            shiftName: employee.departmentId === 'field' ? 'Field Operations Shift' : 'Regular Day Shift',
+            shiftName:
+                employee.departmentId === 'field'
+                    ? 'Field Operations Shift'
+                    : 'Regular Day Shift',
             timeIn,
             timeOut,
             totalHours: status === 'late' ? '7h 52m' : '8h 03m',
@@ -502,7 +619,10 @@ function buildAttendanceHistory(employee: EmployeeOption, index: number): Employ
     });
 }
 
-function resolveDocumentStatus(employeeIndex: number, documentIndex: number): DocumentStatus {
+function resolveDocumentStatus(
+    employeeIndex: number,
+    documentIndex: number,
+): DocumentStatus {
     const token = (employeeIndex + documentIndex) % 6;
 
     if (token === 4) {
@@ -516,7 +636,10 @@ function resolveDocumentStatus(employeeIndex: number, documentIndex: number): Do
     return 'Done';
 }
 
-function createDocuments(employee: EmployeeOption, employeeIndex: number): EmployeeDocument[] {
+function createDocuments(
+    employee: EmployeeOption,
+    employeeIndex: number,
+): EmployeeDocument[] {
     return documentTemplates.map((template, documentIndex) => ({
         id: `${employee.id}-document-${documentIndex + 1}`,
         employeeId: employee.id,
@@ -525,8 +648,15 @@ function createDocuments(employee: EmployeeOption, employeeIndex: number): Emplo
         documentName: template.documentName,
         title: `${template.documentName} - ${employee.employeeCode}`,
         status: resolveDocumentStatus(employeeIndex, documentIndex),
-        uploadedBy: documentIndex % 2 === 0 ? 'Ana Perez, HR Records' : 'Lito Garcia, Department Clerk',
-        uploadedAt: formatDate(2026, ((documentIndex + employeeIndex) % 3) + 1, ((documentIndex * 2 + employeeIndex) % 20) + 6),
+        uploadedBy:
+            documentIndex % 2 === 0
+                ? 'Ana Perez, HR Records'
+                : 'Lito Garcia, Department Clerk',
+        uploadedAt: formatDate(
+            2026,
+            ((documentIndex + employeeIndex) % 3) + 1,
+            ((documentIndex * 2 + employeeIndex) % 20) + 6,
+        ),
         remarks:
             template.category === 'Medical'
                 ? 'Cleared for on-site work and annual deployment.'
@@ -542,7 +672,11 @@ export function createEmployeeProfiles(): EmployeeRecordProfile[] {
 
         return {
             employeeId: employee.id,
-            birthDate: formatDate(1988 + (index % 11), (index % 12) + 1, ((index * 2) % 27) + 1),
+            birthDate: formatDate(
+                1988 + (index % 11),
+                (index % 12) + 1,
+                ((index * 2) % 27) + 1,
+            ),
             age: 26 + (index % 15),
             civilStatus: civilStatuses[index % civilStatuses.length],
             sex: index % 2 === 0 ? 'Female' : 'Male',
@@ -550,9 +684,16 @@ export function createEmployeeProfiles(): EmployeeRecordProfile[] {
             address: `${50 + index} Mabini Street, ${['Quezon City', 'Pasig City', 'Makati City', 'Taguig City', 'Caloocan City'][index % 5]}`,
             email: `${slugifyName(employee.name)}@agency.gov.ph`,
             phone: `09${String(170000000 + index * 1397).slice(0, 9)}`,
-            hireDate: formatDate(2017 + (index % 7), ((index + 4) % 12) + 1, ((index + 7) % 27) + 1),
-            supervisor: departmentConfigs[index % departmentConfigs.length].supervisor,
-            workLocation: departmentConfigs[index % departmentConfigs.length].workLocation,
+            hireDate: formatDate(
+                2017 + (index % 7),
+                ((index + 4) % 12) + 1,
+                ((index + 7) % 27) + 1,
+            ),
+            supervisor:
+                departmentConfigs[index % departmentConfigs.length].supervisor,
+            workLocation:
+                departmentConfigs[index % departmentConfigs.length]
+                    .workLocation,
             emergencyContact: `Maria ${lastName}`,
             emergencyPhone: `09${String(180000000 + index * 1773).slice(0, 9)}`,
             gsisNumber: `GSIS-${String(200000 + index * 17).padStart(6, '0')}`,
@@ -563,7 +704,10 @@ export function createEmployeeProfiles(): EmployeeRecordProfile[] {
                 present: 19 - (index % 3),
                 late: index % 4 === 0 ? 2 : 1,
                 absent: index % 8 === 0 ? 1 : 0,
-                lastClockIn: statusForIndex(index) === 'absent' ? 'No log' : attendanceRecords[index].timeIn ?? 'No log',
+                lastClockIn:
+                    statusForIndex(index) === 'absent'
+                        ? 'No log'
+                        : (attendanceRecords[index].timeIn ?? 'No log'),
             },
             attendanceHistory: buildAttendanceHistory(employee, index),
             documents: createDocuments(employee, index),
@@ -666,11 +810,20 @@ export const employeeRecordFiles: EmployeeRecordFileSummary[] = employees.map(
                     : index % 4 === 0
                       ? 'For Update'
                       : 'Complete',
-            lastUpdated: formatDate(2026, ((index + 1) % 3) + 1, ((index + 5) % 20) + 6),
+            lastUpdated: formatDate(
+                2026,
+                ((index + 1) % 3) + 1,
+                ((index + 5) % 20) + 6,
+            ),
             documentCounts: {
-                done: documents.filter((document) => document.status === 'Done').length,
-                missing: documents.filter((document) => document.status === 'Missing').length,
-                draft: documents.filter((document) => document.status === 'Draft').length,
+                done: documents.filter((document) => document.status === 'Done')
+                    .length,
+                missing: documents.filter(
+                    (document) => document.status === 'Missing',
+                ).length,
+                draft: documents.filter(
+                    (document) => document.status === 'Draft',
+                ).length,
             },
         };
     },
@@ -773,7 +926,8 @@ export const printableForms: PrintableForm[] = [
         name: 'Applicant Information Sheet',
         category: 'Recruitment',
         audience: 'Applicants and Recruitment Team',
-        description: 'Initial intake form used before a person is converted into an employee record.',
+        description:
+            'Initial intake form used before a person is converted into an employee record.',
     },
     {
         id: 'printable-form-2',
@@ -781,7 +935,8 @@ export const printableForms: PrintableForm[] = [
         name: 'Interview Evaluation Form',
         category: 'Recruitment',
         audience: 'Panel Interviewers',
-        description: 'Printable panel evaluation sheet for recruitment screening.',
+        description:
+            'Printable panel evaluation sheet for recruitment screening.',
     },
     {
         id: 'printable-form-3',
@@ -797,7 +952,8 @@ export const printableForms: PrintableForm[] = [
         name: 'CS Form 33 - Oath of Office',
         category: '201 File',
         audience: 'Newly appointed employees',
-        description: 'Printable oath of office form for appointment processing.',
+        description:
+            'Printable oath of office form for appointment processing.',
     },
     {
         id: 'printable-form-5',
@@ -805,7 +961,8 @@ export const printableForms: PrintableForm[] = [
         name: 'Medical Certificate Routing Slip',
         category: 'Medical',
         audience: 'Employees',
-        description: 'Form used to track annual medical submission requirements.',
+        description:
+            'Form used to track annual medical submission requirements.',
     },
     {
         id: 'printable-form-6',
@@ -829,7 +986,8 @@ export const printableForms: PrintableForm[] = [
         name: 'Records Borrowing Slip',
         category: 'Administrative',
         audience: 'Records Office',
-        description: 'Tracks temporary withdrawal of physical 201 jackets and folders.',
+        description:
+            'Tracks temporary withdrawal of physical 201 jackets and folders.',
     },
 ];
 
@@ -857,5 +1015,195 @@ export const archiveEntries: ArchiveEntry[] = [
         archivedAt: '2025-12-18',
         retention: 'Permanent reference copy',
         storageLocation: 'Archive Room C · Cabinet 02',
+    },
+];
+
+export const payrollRecords: PayrollRecord[] = [
+    {
+        id: 'payroll-001',
+        employeeId: 'emp-001',
+        employeeCode: 'EMP-001',
+        employeeName: 'Maria Elena Santos',
+        position: 'Senior HR Officer',
+        departmentName: 'Human Resources',
+        periodStart: '2026-04-01',
+        periodEnd: '2026-04-30',
+        basicPay: 35000,
+        overtimePay: 4200,
+        deductions: 6500,
+        netPay: 32700,
+        status: 'Paid',
+        processedAt: '2026-04-28',
+    },
+    {
+        id: 'payroll-002',
+        employeeId: 'emp-002',
+        employeeCode: 'EMP-002',
+        employeeName: 'Carlos J. Mercado',
+        position: 'Finance Analyst',
+        departmentName: 'Finance',
+        periodStart: '2026-04-01',
+        periodEnd: '2026-04-30',
+        basicPay: 28500,
+        overtimePay: 2800,
+        deductions: 5100,
+        netPay: 26200,
+        status: 'Finalized',
+        processedAt: '2026-04-25',
+    },
+    {
+        id: 'payroll-003',
+        employeeId: 'emp-003',
+        employeeCode: 'EMP-003',
+        employeeName: 'Jessica M. Reyes',
+        position: 'IT Systems Officer',
+        departmentName: 'Information Technology',
+        periodStart: '2026-04-01',
+        periodEnd: '2026-04-30',
+        basicPay: 42000,
+        overtimePay: 5600,
+        deductions: 8200,
+        netPay: 39400,
+        status: 'Paid',
+        processedAt: '2026-04-28',
+    },
+    {
+        id: 'payroll-004',
+        employeeId: 'emp-004',
+        employeeCode: 'EMP-004',
+        employeeName: 'Roberto P. Villano',
+        position: 'Operations Manager',
+        departmentName: 'Operations',
+        periodStart: '2026-04-01',
+        periodEnd: '2026-04-30',
+        basicPay: 38000,
+        overtimePay: 3500,
+        deductions: 7200,
+        netPay: 34300,
+        status: 'Draft',
+        processedAt: '2026-04-26',
+    },
+    {
+        id: 'payroll-005',
+        employeeId: 'emp-005',
+        employeeCode: 'EMP-005',
+        employeeName: 'Angela R. Cruz',
+        position: 'HR Coordinator',
+        departmentName: 'Human Resources',
+        periodStart: '2026-04-01',
+        periodEnd: '2026-04-30',
+        basicPay: 18000,
+        overtimePay: 2100,
+        deductions: 3300,
+        netPay: 16800,
+        status: 'Finalized',
+        processedAt: '2026-04-24',
+    },
+];
+
+export const payrollDetails: PayrollDetails[] = [
+    {
+        id: 'payroll-001',
+        employeeId: 'emp-001',
+        employeeCode: 'EMP-001',
+        employeeName: 'Maria Elena Santos',
+        position: 'Senior HR Officer',
+        departmentName: 'Human Resources',
+        periodStart: '2026-04-01',
+        periodEnd: '2026-04-30',
+        basicPay: 35000,
+        overtimePay: 4200,
+        deductions: 6500,
+        netPay: 32700,
+        status: 'Paid',
+        processedAt: '2026-04-28',
+        items: [
+            {
+                id: 'item-1',
+                type: 'Basic Pay',
+                description: 'Monthly salary',
+                amount: 35000,
+            },
+            {
+                id: 'item-2',
+                type: 'Overtime Pay',
+                description: 'Overtime hours (28.5 hours)',
+                amount: 4200,
+            },
+            {
+                id: 'item-3',
+                type: 'Deduction',
+                description: 'SSS, PhilHealth, Pag-IBIG',
+                amount: 6500,
+            },
+        ],
+    },
+];
+
+export const salaryRecords: SalaryRecord[] = [
+    {
+        id: 'salary-001',
+        employeeId: 'emp-001',
+        employeeCode: 'EMP-001',
+        employeeName: 'Maria Elena Santos',
+        position: 'Senior HR Officer',
+        departmentName: 'Human Resources',
+        salaryGrade: 'SG-5',
+        monthlySalary: 35000,
+        annualSalary: 420000,
+        effectiveDate: '2025-01-01',
+        status: 'Active',
+    },
+    {
+        id: 'salary-002',
+        employeeId: 'emp-002',
+        employeeCode: 'EMP-002',
+        employeeName: 'Carlos J. Mercado',
+        position: 'Finance Analyst',
+        departmentName: 'Finance',
+        salaryGrade: 'SG-4',
+        monthlySalary: 28500,
+        annualSalary: 342000,
+        effectiveDate: '2025-02-01',
+        status: 'Active',
+    },
+    {
+        id: 'salary-003',
+        employeeId: 'emp-003',
+        employeeCode: 'EMP-003',
+        employeeName: 'Jessica M. Reyes',
+        position: 'IT Systems Officer',
+        departmentName: 'Information Technology',
+        salaryGrade: 'SG-6',
+        monthlySalary: 42000,
+        annualSalary: 504000,
+        effectiveDate: '2024-06-15',
+        status: 'Active',
+    },
+    {
+        id: 'salary-004',
+        employeeId: 'emp-004',
+        employeeCode: 'EMP-004',
+        employeeName: 'Roberto P. Villano',
+        position: 'Operations Manager',
+        departmentName: 'Operations',
+        salaryGrade: 'SG-5',
+        monthlySalary: 38000,
+        annualSalary: 456000,
+        effectiveDate: '2025-03-01',
+        status: 'Active',
+    },
+    {
+        id: 'salary-005',
+        employeeId: 'emp-005',
+        employeeCode: 'EMP-005',
+        employeeName: 'Angela R. Cruz',
+        position: 'HR Coordinator',
+        departmentName: 'Human Resources',
+        salaryGrade: 'SG-2',
+        monthlySalary: 18000,
+        annualSalary: 216000,
+        effectiveDate: '2025-04-01',
+        status: 'Active',
     },
 ];

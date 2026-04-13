@@ -14,3 +14,8 @@ export type NavItem = {
     disabled?: boolean;
     children?: NavItem[];
 };
+
+export type SidebarNavItem = Omit<NavItem, 'href' | 'children'> & {
+    href?: NonNullable<InertiaLinkProps['href']>;
+    children?: SidebarNavItem[];
+};

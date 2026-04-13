@@ -1,4 +1,5 @@
 export type AttendanceStatus = 'present' | 'late' | 'absent';
+import { shifts } from './../lib/hrisData';
 
 export type AttendanceLogType = 'IN' | 'BREAK OUT' | 'BREAK IN' | 'OUT';
 
@@ -67,6 +68,27 @@ export type PrintableFormCategory =
 export type DepartmentOption = {
     id: string;
     name: string;
+};
+
+export type DepartmentRecord = {
+    id: string;
+    name: string;
+    supervisor: string;
+    workLocation: string;
+    positions: string[];
+};
+
+export type EmployeeDirectoryStatus = 'Active' | 'On Leave' | 'Inactive';
+
+export type EmployeeDirectoryRecord = {
+    employee_no: string;
+    department_employee_id: string;
+    first_name: string;
+    last_name: string;
+    middle_name: string;
+    position: string;
+    hire_date: string;
+    status: EmployeeDirectoryStatus;
 };
 
 export type EmployeeOption = {
@@ -246,4 +268,57 @@ export type ArchiveEntry = {
     archivedAt: string;
     retention: string;
     storageLocation: string;
+};
+
+export type PayrollStatus = 'Draft' | 'Finalized' | 'Paid';
+
+export type PayrollItemType =
+    | 'Basic Pay'
+    | 'Overtime Pay'
+    | 'Holiday Pay'
+    | 'Deduction'
+    | 'Bonus';
+
+export type PayrollRecord = {
+    id: string;
+    employeeId: string;
+    employeeCode: string;
+    employeeName: string;
+    position: string;
+    departmentName: string;
+    periodStart: string;
+    periodEnd: string;
+    basicPay: number;
+    overtimePay: number;
+    deductions: number;
+    netPay: number;
+    status: PayrollStatus;
+    processedAt: string;
+};
+
+export type PayrollItem = {
+    id: string;
+    type: PayrollItemType;
+    description: string;
+    amount: number;
+};
+
+export type PayrollDetails = PayrollRecord & {
+    items: PayrollItem[];
+};
+
+export type SalaryGrade = 'SG-1' | 'SG-2' | 'SG-3' | 'SG-4' | 'SG-5' | 'SG-6' | 'SG-7';
+
+export type SalaryRecord = {
+    id: string;
+    employeeId: string;
+    employeeCode: string;
+    employeeName: string;
+    position: string;
+    departmentName: string;
+    salaryGrade: SalaryGrade;
+    monthlySalary: number;
+    annualSalary: number;
+    effectiveDate: string;
+    status: 'Active' | 'Inactive';
 };
